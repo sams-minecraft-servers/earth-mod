@@ -1,7 +1,7 @@
 {
   "dataDir": "/home/ubuntu/earth-data/hgt",
-  "horizontalScale": 50,
-  "metresPerBlockY": 12.5,
-  "seaLevel": 63,
+  "horizontalScale": 5,
+  "metresPerBlockY": 5,
+  "seaLevel": 160,
   "unknownSeaDepth": 6
 }

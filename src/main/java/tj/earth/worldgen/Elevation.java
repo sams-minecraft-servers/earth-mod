@@ -34,12 +34,21 @@ public final class Elevation {
         double column = (longitude - west) * last, row = (south + 1 - latitude) * last;
         int c = Math.min((int) column, last - 1), r = Math.min((int) row, last - 1);
         float fx = (float) (column - c), fy = (float) (row - r);
-        ShortBuffer m = tile.metres;
-        short a = m.get(r * tile.size + c), b = m.get(r * tile.size + c + 1);
-        short d = m.get((r + 1) * tile.size + c), e = m.get((r + 1) * tile.size + c + 1);
-        if (a == VOID || b == VOID || d == VOID || e == VOID) return Float.NaN;
-        float top = a + (b - a) * fx, bottom = d + (e - d) * fx;
-        return top + (bottom - top) * fy;
+        // A smooth surface through the samples (Catmull-Rom over the 4 x 4 around the point): at
+        // large map scales one sample covers several blocks, and straight lines between them show as facets.
+        float[] rows = new float[4];
+        for (int j = 0; j < 4; j++) {
+            int rr = Math.max(0, Math.min(last, r - 1 + j)) * tile.size;
+            short p0 = tile.metres.get(rr + Math.max(0, c - 1)), p1 = tile.metres.get(rr + c);
+            short p2 = tile.metres.get(rr + c + 1), p3 = tile.metres.get(rr + Math.min(last, c + 2));
+            if (p0 == VOID || p1 == VOID || p2 == VOID || p3 == VOID) return Float.NaN;
+            rows[j] = cubic(p0, p1, p2, p3, fx);
+        }
+        return cubic(rows[0], rows[1], rows[2], rows[3], fy);
+    }
+
+    private static float cubic(float p0, float p1, float p2, float p3, float t) {
+        return p1 + 0.5f * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)));
     }
 
     private static Tile load(int south, int west) {

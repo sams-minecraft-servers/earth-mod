@@ -17,7 +17,7 @@
   },
   "material_rule": "minecraft:overworld",
   "spawn_target": [],
-  "sea_level": 63,
+  "sea_level": 160,
   "disable_mob_generation": false,
   "legacy_random_source": false
 }

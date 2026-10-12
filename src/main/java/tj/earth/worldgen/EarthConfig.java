@@ -14,12 +14,19 @@ import java.nio.file.Path;
 public final class EarthConfig {
     /** Folder of elevation tiles (N44E008.hgt and so on). */
     public String dataDir = "earth-data/hgt";
-    /** Real metres across one block on the ground, at the equator: 50 means a 1:50 map. */
-    public double horizontalScale = 50.0;
-    /** Real metres of height in one block. Less than horizontalScale exaggerates the relief. */
-    public double metresPerBlockY = 12.5;
-    /** Must be the same as sea_level in the datapack's noise settings. */
-    public int seaLevel = 63;
+    /** Real metres across one block on the ground, at the equator: 5 means a 1:5 map. */
+    public double horizontalScale = 5.0;
+    /**
+     * Real metres of height in one block. Less than horizontalScale exaggerates the relief.
+     * The world is 4064 blocks tall and the Earth spans 19,784 m from its deepest trench to its
+     * highest peak, so nothing under about 4.9 fits; 5 is true scale on a 1:5 map.
+     */
+    public double metresPerBlockY = 5.0;
+    /**
+     * Must be the same as sea_level in the datapack's noise settings. At 160, with 5 m per block,
+     * Everest (y 1930) and the Challenger Deep (y -2027) are both inside the world.
+     */
+    public int seaLevel = 160;
     /** How far below sea level the seabed lies where no depth is known, in blocks. */
     public int unknownSeaDepth = 6;
 

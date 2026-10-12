@@ -4,7 +4,7 @@ A Fabric mod (server side only; players join with an unmodified game) that gener
 Earth as chunks are first needed, from elevation data, instead of from a pre-generated map.
 
 - `src/` the mod: `earth_worldgen:surface` (density function: the Y of the real ground at a column)
-  and `earth_worldgen:earth` (biome source). No Fabric API; one mixin registers the two types.
+  and `earth_worldgen:earth` (biome source). No Fabric API; one mixin registers its types.
 - `datapack/` goes in the world's `datapacks/` folder **before the world is first started**. It makes
   the overworld 4064 blocks tall (Y -2032 to 2031, the most the game allows) and points its
   generator at the mod.
@@ -15,7 +15,7 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
 
 ## Building and trying it
 
-    ./gradlew build                                  # build/libs/earth-worldgen-<version>.jar
+    tools/guard.sh 4G ./gradlew build --no-daemon    # build/libs/earth-worldgen-<version>.jar
     tools/test-server.sh commands.txt --fresh        # a private server in run/ on 127.0.0.1:25599
     tools/region_map.py run/world/dimensions/minecraft/overworld/region out.png
 

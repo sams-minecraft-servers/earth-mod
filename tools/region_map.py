@@ -68,9 +68,33 @@ COLOURS = {'ocean': (40, 80, 170), 'deep_ocean': (25, 50, 130), 'river': (60, 11
 
 def png(path, width, height, rows):
     def chunk(tag, body): return struct.pack('>I', len(body)) + tag + body + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
-    raw = b''.join(b'\x00' + bytes(row) for row in rows)
+    raw = b''.join(b'\x00' + row for row in rows)
     with open(path, 'wb') as f:
         f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
+
+# This tool once took all the memory of the machine it runs on; it now cannot have more than 2 GB.
+import resource
+resource.setrlimit(resource.RLIMIT_AS, (2 << 30, 2 << 30))
+MAX_PIXELS = 16_000_000
+
+def largest_group(cols):
+    """The columns of the biggest connected patch of generated land, by 512-block cell.
+
+    The test world also has chunks around its spawn point at 0,0, hundreds of thousands of blocks
+    from the area under test. One picture spanning both would be billions of pixels: building it
+    once used all of the machine's memory and froze every server (2026-10-12)."""
+    cells = {}
+    for (x, z) in cols: cells.setdefault((x >> 9, z >> 9), []).append((x, z))
+    best, seen = [], set()
+    for start in cells:
+        if start in seen: continue
+        group, todo = [], [start]; seen.add(start)
+        while todo:
+            cx, cz = todo.pop(); group.append((cx, cz))
+            for n in ((cx + 1, cz), (cx - 1, cz), (cx, cz + 1), (cx, cz - 1)):
+                if n in cells and n not in seen: seen.add(n); todo.append(n)
+        if sum(len(cells[c]) for c in group) > sum(len(cells[c]) for c in best): best = group
+    return {k: cols[k] for c in best for k in cells[c]}
 
 def main():
     region_dir, out = sys.argv[1], sys.argv[2]
@@ -99,8 +123,15 @@ def main():
             cols[(cx * 16 + x, cz * 16 + z)] = (y, name)
     print('chunk statuses:', statuses)
     if not cols: return print('no finished chunks')
-    xs = [k[0] for k in cols]; zs = [k[1] for k in cols]; ys = [v[0] for v in cols.values()]
+    xs = [k[0] for k in cols]; zs = [k[1] for k in cols]
+    if (max(xs) - min(xs) + 1) * (max(zs) - min(zs) + 1) > MAX_PIXELS:
+        total = len(cols); cols = largest_group(cols)
+        print('the generated chunks are far apart: drawing only the largest patch (%d of %d columns)' % (len(cols), total))
+        xs = [k[0] for k in cols]; zs = [k[1] for k in cols]
+    ys = [v[0] for v in cols.values()]
     x0, x1, z0, z1 = min(xs), max(xs), min(zs), max(zs)
+    if (x1 - x0 + 1) * (z1 - z0 + 1) > MAX_PIXELS:
+        return print('not drawing: the picture would be %d x %d pixels (limit %d in all)' % (x1 - x0 + 1, z1 - z0 + 1, MAX_PIXELS))
     print('blocks x %d..%d  z %d..%d   surface y %d..%d' % (x0, x1, z0, z1, min(ys), max(ys)))
     print('biomes:', dict(sorted(biomes.items(), key=lambda kv: -kv[1])))
     n = sum(v for k, v in statuses.items() if k == 'minecraft:full')
@@ -117,7 +148,7 @@ def main():
             west = cols.get((x - 1, z - 1), v)[0]
             shade = max(0.55, min(1.35, 1.0 + (y - west) * 0.12)) * (0.8 + 0.2 * (y - lo) / max(1, hi - lo))
             row += tuple(max(0, min(255, int(ch * shade))) for ch in base)
-        rows.append(row)
+        rows.append(bytes(row))
     png(out, x1 - x0 + 1, z1 - z0 + 1, rows)
     print('wrote', out, '%dx%d' % (x1 - x0 + 1, z1 - z0 + 1))
 

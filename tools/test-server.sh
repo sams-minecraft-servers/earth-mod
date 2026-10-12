@@ -4,11 +4,20 @@
 #
 #   tools/test-server.sh commands.txt [--fresh]     --fresh deletes the test world first
 #
-# In the commands file a line "wait 20" pauses for that many seconds.
+# In the commands file a line "wait 20" pauses for that many seconds. TEST_HEAP (default 4G) and
+# TEST_JAVA_OPTS (extra java options, e.g. a flight recording) can be set in the environment.
+#
+# The server runs under tools/guard.sh: it is refused when the machine is short of memory, cannot
+# use more than its heap plus 2 GB, and is stopped after TEST_TIMEOUT (default 30m). Only one test
+# server runs at a time.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 COMMANDS=${1:?usage: tools/test-server.sh commands.txt [--fresh]}
 RUN=run
+ROOT=$PWD
+HEAP=${TEST_HEAP:-4G}
+LIMIT=$(( $(numfmt --from=iec "$HEAP") / 1048576 + 2048 ))M
+if pgrep -f "[f]abric-server.jar --nogui" > /dev/null; then echo "a test server is already running; stop it first"; exit 1; fi
 [ -s "$RUN/fabric-server.jar" ] || { echo "run/fabric-server.jar is missing (see README)"; exit 1; }
 if [ "${2:-}" = "--fresh" ]; then find "$RUN/world" -mindepth 1 -maxdepth 1 ! -name datapacks -exec rm -r {} +; fi
 
@@ -34,7 +43,7 @@ PROPS
 
 FIFO=$(mktemp -u) && mkfifo "$FIFO"
 trap 'rm -f "$FIFO"' EXIT
-( cd "$RUN" && exec java -Xmx${TEST_HEAP:-4G} -Xms1G -jar fabric-server.jar --nogui < "$FIFO" > server.out 2>&1 ) &
+( cd "$RUN" && GUARD_TIMEOUT=${TEST_TIMEOUT:-30m} exec "$ROOT/tools/guard.sh" "$LIMIT" java -Xmx$HEAP -Xms1G ${TEST_JAVA_OPTS:-} -jar fabric-server.jar --nogui < "$FIFO" > server.out 2>&1 ) &
 SERVER=$!
 exec 3> "$FIFO"
 for i in $(seq 1 180); do

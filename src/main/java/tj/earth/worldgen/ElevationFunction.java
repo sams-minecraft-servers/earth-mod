@@ -51,14 +51,14 @@ public record ElevationFunction() implements DensityFunction {
             for (int z = 0; z < volume.sizeZ(); z++) {
                 int blockZ = volume.blockZ(z);
                 for (int x = 0; x < volume.sizeX(); x++) {
-                    output.setRange(volume.indexUnchecked(x, 0, z), volume.sizeY(), Terrain.surfaceY(volume.blockX(x), blockZ));
+                    output.setRange(volume.indexUnchecked(x, 0, z), volume.sizeY(), Terrain.column(volume.blockX(x), blockZ).surfaceY());
                 }
             }
         }
 
         @Override
         public float sampleValue(final SamplerContext context, final int blockX, final int blockY, final int blockZ) {
-            return Terrain.surfaceY(blockX, blockZ);
+            return Terrain.column(blockX, blockZ).surfaceY();
         }
     }
 }

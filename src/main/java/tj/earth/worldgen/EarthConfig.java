@@ -33,9 +33,14 @@ public final class EarthConfig {
     public int unknownSeaDepth = 6;
 
     private static final double EQUATOR_METRES = 40_075_016.686;
-    private static EarthConfig instance;
+    private static volatile EarthConfig instance;
 
-    public static synchronized EarthConfig get() {
+    public static EarthConfig get() {
+        EarthConfig config = instance;
+        return config != null ? config : load();
+    }
+
+    private static synchronized EarthConfig load() {
         if (instance == null) {
             Path file = Path.of("config", "earth_worldgen.json");
             EarthConfig loaded = null;

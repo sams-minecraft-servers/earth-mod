@@ -9,7 +9,32 @@ public final class Terrain {
 
     private static final float SEA_MARGIN_METRES = 5f;
 
+    /** Everything worked out about one column. The game asks about the same column thousands of times while it builds a chunk. */
+    public record Column(int x, int z, float metres, int cover, float surfaceY, int waterLevel) {
+        /** The Y of the first block above the ground. */
+        public int top() {
+            return (int) Math.ceil(surfaceY);
+        }
+    }
+
+    // Columns already worked out, shared by every thread. A slot is simply overwritten when another
+    // column lands on it; a Column never changes once made, so no locking is needed.
+    private static final int REMEMBERED = 1 << 16;
+    private static final Column[] COLUMNS = new Column[REMEMBERED];
+
     private Terrain() {}
+
+    public static Column column(int blockX, int blockZ) {
+        int slot = (blockX * 0x9E3779B1 + blockZ * 0x85EBCA6B) >>> 16;
+        Column column = COLUMNS[slot];
+        if (column == null || column.x != blockX || column.z != blockZ) {
+            float metres = metres(blockX, blockZ);
+            int cover = cover(blockX, blockZ);
+            column = new Column(blockX, blockZ, metres, cover, surfaceY(blockX, blockZ, metres, cover), waterLevel(blockX, blockZ, metres, cover));
+            COLUMNS[slot] = column;
+        }
+        return column;
+    }
 
     /** Real metres above sea level at a column; NaN where nothing is known. */
     public static float metres(int blockX, int blockZ) {
@@ -39,10 +64,8 @@ public final class Terrain {
      * Blocks below this Y are water in a column that has any (the sea, a lake, a river); DRY otherwise.
      * A lake's water stands at the height the elevation data gives its surface.
      */
-    public static int waterLevel(int blockX, int blockZ) {
+    private static int waterLevel(int blockX, int blockZ, float metres, int cover) {
         EarthConfig c = EarthConfig.get();
-        float metres = metres(blockX, blockZ);
-        int cover = cover(blockX, blockZ);
         if (!isWater(cover, metres)) return DRY;
         return isSea(cover, metres) ? c.seaLevel : landY(c, stillWaterMetres(blockX, blockZ, metres));
     }
@@ -66,10 +89,8 @@ public final class Terrain {
     }
 
     /** The Y just above the top solid block of a column: blocks below it are ground. */
-    public static float surfaceY(int blockX, int blockZ) {
+    private static float surfaceY(int blockX, int blockZ, float metres, int cover) {
         EarthConfig c = EarthConfig.get();
-        float metres = metres(blockX, blockZ);
-        int cover = cover(blockX, blockZ);
         if (!isWater(cover, metres)) {
             // Land, which may lie below sea level (polders, the Dead Sea shore) and stays dry there.
             // Where the maps disagree along a coast (land here, but a sea depth for its height) the land wins

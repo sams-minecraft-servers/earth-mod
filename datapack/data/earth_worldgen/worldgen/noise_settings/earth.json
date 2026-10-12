@@ -3,7 +3,7 @@
     "min_y": -2032,
     "height": 4064
   },
-  "default_block": "minecraft:stone",
+  "default_block": "minecraft:deepslate",
   "default_fluid": "minecraft:water",
   "noise_router": {
     "chunk_surface_level": "earth_worldgen:surface",
@@ -15,7 +15,7 @@
     "temperature": 0.0,
     "vegetation": 0.0
   },
-  "material_rule": "minecraft:overworld",
+  "material_rule": "earth_worldgen:earth",
   "spawn_target": [],
   "sea_level": 160,
   "disable_mob_generation": false,

@@ -63,8 +63,9 @@ public final class EarthBiomeSource extends BiomeSource {
     }
 
     private Holder<Biome> biomeAt(final int blockX, final int blockZ) {
-        float metres = Terrain.metres(blockX, blockZ);
-        int cover = Terrain.cover(blockX, blockZ);
+        Terrain.Column column = Terrain.column(blockX, blockZ);
+        float metres = column.metres();
+        int cover = column.cover();
         if (Terrain.isWater(cover, metres)) {
             if (!Terrain.isSea(cover, metres)) return river;
             return metres < -1000 ? deepOcean : ocean;

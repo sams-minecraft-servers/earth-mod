@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tj.earth.worldgen.EarthWorldgen;
 
 /**
- * The game closes its built-in registries before mods are started, so our two entries are added
+ * The game closes its built-in registries before mods are started, so our entries are added
  * at the last moment they can be: just before the registries are frozen.
  */
 @Mixin(BuiltInRegistries.class)

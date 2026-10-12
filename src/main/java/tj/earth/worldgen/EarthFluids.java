@@ -13,12 +13,6 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 public final class EarthFluids {
     private static final Aquifer.FluidStatus NONE = new Aquifer.FluidStatus(Terrain.DRY, Blocks.AIR.defaultBlockState());
 
-    /** The answer for the column a thread asked about last: the game asks once per block, top to bottom. */
-    private static final class Last {
-        int x = Integer.MIN_VALUE, z;
-        Aquifer.FluidStatus status;
-    }
-
     private EarthFluids() {}
 
     /** Our dimension is the one that uses the full height the game allows. */
@@ -27,17 +21,14 @@ public final class EarthFluids {
     }
 
     public static Aquifer.FluidPicker picker(final NoiseGeneratorSettings settings) {
-        final ThreadLocal<Last> last = ThreadLocal.withInitial(Last::new);
-        final Aquifer.FluidStatus sea = new Aquifer.FluidStatus(settings.seaLevel(), settings.defaultFluid());
+        // One answer per water level, made the first time a lake or river at that height is met.
+        final Aquifer.FluidStatus[] byLevel = new Aquifer.FluidStatus[DimensionType.Y_SIZE + 1];
         return (x, y, z) -> {
-            Last l = last.get();
-            if (l.x != x || l.z != z || l.status == null) {
-                int level = Terrain.waterLevel(x, z);
-                l.x = x;
-                l.z = z;
-                l.status = level == Terrain.DRY ? NONE : level == settings.seaLevel() ? sea : new Aquifer.FluidStatus(level, settings.defaultFluid());
-            }
-            return l.status;
+            int level = Terrain.column(x, z).waterLevel();
+            if (level == Terrain.DRY) return NONE;
+            Aquifer.FluidStatus status = byLevel[level - DimensionType.MIN_Y];
+            if (status == null) byLevel[level - DimensionType.MIN_Y] = status = new Aquifer.FluidStatus(level, settings.defaultFluid());
+            return status;
         };
     }
 }

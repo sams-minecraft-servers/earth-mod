@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""Draws what the test server generated: reads region files and writes a picture of the surface.
+
+    tools/region_map.py <world>/dimensions/minecraft/overworld/region out.png [--min-y -2032]
+
+Each pixel is one block column, coloured by its biome and shaded by height, so the result can be
+compared with a real map. Also prints the range of heights, the biomes found and the size on disk.
+Needs nothing beyond Python itself.
+"""
+import os, struct, sys, zlib
+
+def read_nbt(buf):
+    pos = 0
+    def u(fmt, n):
+        nonlocal pos
+        v = struct.unpack_from(fmt, buf, pos)[0]; pos += n; return v
+    def string():
+        nonlocal pos
+        n = u('>H', 2); s = buf[pos:pos + n].decode('utf-8', 'replace'); pos += n; return s
+    def payload(t):
+        nonlocal pos
+        if t == 1: return u('>b', 1)
+        if t == 2: return u('>h', 2)
+        if t == 3: return u('>i', 4)
+        if t == 4: return u('>q', 8)
+        if t == 5: return u('>f', 4)
+        if t == 6: return u('>d', 8)
+        if t == 7: n = u('>i', 4); v = buf[pos:pos + n]; pos += n; return v
+        if t == 8: return string()
+        if t == 9:
+            it = u('>b', 1); n = u('>i', 4); return [payload(it) for _ in range(n)]
+        if t == 10:
+            out = {}
+            while True:
+                it = u('>b', 1)
+                if it == 0: return out
+                name = string(); out[name] = payload(it)
+        if t == 11: n = u('>i', 4); v = struct.unpack_from('>%di' % n, buf, pos); pos += 4 * n; return v
+        if t == 12: n = u('>i', 4); v = struct.unpack_from('>%dq' % n, buf, pos); pos += 8 * n; return v
+        raise ValueError('tag %d' % t)
+    t = u('>b', 1); string(); return payload(t)
+
+def chunks(region_dir):
+    for name in sorted(os.listdir(region_dir)):
+        if not name.endswith('.mca'): continue
+        with open(os.path.join(region_dir, name), 'rb') as f: data = f.read()
+        if len(data) < 8192: continue
+        for i in range(1024):
+            off = struct.unpack_from('>I', data, i * 4)[0]
+            if off == 0: continue
+            start = (off >> 8) * 4096
+            length, kind = struct.unpack_from('>IB', data, start)
+            raw = data[start + 5:start + 4 + length]
+            yield read_nbt(zlib.decompress(raw) if kind == 2 else raw), length + 4
+
+def unpack(longs, bits, count):
+    per, mask, out = 64 // bits, (1 << bits) - 1, []
+    for value in longs:
+        value &= (1 << 64) - 1
+        for _ in range(per):
+            out.append(value & mask); value >>= bits
+            if len(out) == count: return out
+    return out
+
+COLOURS = {'ocean': (40, 80, 170), 'deep_ocean': (25, 50, 130), 'river': (60, 110, 200), 'beach': (225, 215, 150), 'plains': (140, 185, 90),
+           'forest': (60, 130, 60), 'taiga': (50, 100, 80), 'meadow': (150, 200, 130), 'stony_peaks': (150, 150, 150), 'frozen_peaks': (240, 245, 250),
+           'desert': (220, 200, 120), 'savanna': (190, 180, 90), 'jungle': (40, 150, 50), 'swamp': (90, 110, 80), 'snowy_plains': (235, 240, 240)}
+
+def png(path, width, height, rows):
+    def chunk(tag, body): return struct.pack('>I', len(body)) + tag + body + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
+    raw = b''.join(b'\x00' + bytes(row) for row in rows)
+    with open(path, 'wb') as f:
+        f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw, 6)) + chunk(b'IEND', b''))
+
+def main():
+    region_dir, out = sys.argv[1], sys.argv[2]
+    min_y = int(sys.argv[sys.argv.index('--min-y') + 1]) if '--min-y' in sys.argv else -2032
+    cols, stored, statuses, biomes = {}, 0, {}, {}
+    for c, size in chunks(region_dir):
+        statuses[c.get('Status')] = statuses.get(c.get('Status'), 0) + 1
+        hm = (c.get('Heightmaps') or {}).get('WORLD_SURFACE')
+        if not hm or c.get('Status') != 'minecraft:full': continue
+        stored += size
+        heights = unpack(hm, 12, 256)
+        # the biome of the section the surface is in, sampled per 4x4 column
+        sections = {s['Y']: s for s in c['sections']}
+        cx, cz = c['xPos'], c['zPos']
+        for i, h in enumerate(heights):
+            x, z, y = i % 16, i // 16, h + min_y - 1
+            sec = sections.get(y >> 4) or {}
+            b = sec.get('biomes') or {}
+            pal = b.get('palette') or ['?']
+            if len(pal) == 1: name = pal[0]
+            else:
+                bits = max(1, (len(pal) - 1).bit_length())
+                idx = unpack(b['data'], bits, 64)
+                name = pal[idx[((y & 15) >> 2) * 16 + (z >> 2) * 4 + (x >> 2)]]
+            name = name.split(':')[-1]; biomes[name] = biomes.get(name, 0) + 1
+            cols[(cx * 16 + x, cz * 16 + z)] = (y, name)
+    print('chunk statuses:', statuses)
+    if not cols: return print('no finished chunks')
+    xs = [k[0] for k in cols]; zs = [k[1] for k in cols]; ys = [v[0] for v in cols.values()]
+    x0, x1, z0, z1 = min(xs), max(xs), min(zs), max(zs)
+    print('blocks x %d..%d  z %d..%d   surface y %d..%d' % (x0, x1, z0, z1, min(ys), max(ys)))
+    print('biomes:', dict(sorted(biomes.items(), key=lambda kv: -kv[1])))
+    n = sum(v for k, v in statuses.items() if k == 'minecraft:full')
+    print('finished chunks: %d, %.1f KB each as stored' % (n, stored / n / 1024))
+    lo, hi = min(ys), max(ys)
+    rows = []
+    for z in range(z0, z1 + 1):
+        row = []
+        for x in range(x0, x1 + 1):
+            v = cols.get((x, z))
+            if not v: row += (0, 0, 0); continue
+            y, name = v
+            base = COLOURS.get(name, (200, 60, 200))
+            west = cols.get((x - 1, z - 1), v)[0]
+            shade = max(0.55, min(1.35, 1.0 + (y - west) * 0.12)) * (0.8 + 0.2 * (y - lo) / max(1, hi - lo))
+            row += tuple(max(0, min(255, int(ch * shade))) for ch in base)
+        rows.append(row)
+    png(out, x1 - x0 + 1, z1 - z0 + 1, rows)
+    print('wrote', out, '%dx%d' % (x1 - x0 + 1, z1 - z0 + 1))
+
+if __name__ == '__main__':
+    main()

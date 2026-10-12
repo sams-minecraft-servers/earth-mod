@@ -64,7 +64,7 @@ def unpack(longs, bits, count):
 
 COLOURS = {'ocean': (40, 80, 170), 'deep_ocean': (25, 50, 130), 'river': (60, 110, 200), 'beach': (225, 215, 150), 'plains': (140, 185, 90),
            'forest': (60, 130, 60), 'taiga': (50, 100, 80), 'meadow': (150, 200, 130), 'stony_peaks': (150, 150, 150), 'frozen_peaks': (240, 245, 250),
-           'desert': (220, 200, 120), 'savanna': (190, 180, 90), 'jungle': (40, 150, 50), 'swamp': (90, 110, 80), 'snowy_plains': (235, 240, 240)}
+           'mangrove_swamp': (70, 120, 70), 'windswept_gravelly_hills': (135, 130, 120), 'jungle': (40, 150, 50), 'desert': (220, 200, 120), 'savanna': (190, 180, 90), 'jungle': (40, 150, 50), 'swamp': (90, 110, 80), 'snowy_plains': (235, 240, 240)}
 
 def png(path, width, height, rows):
     def chunk(tag, body): return struct.pack('>I', len(body)) + tag + body + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)

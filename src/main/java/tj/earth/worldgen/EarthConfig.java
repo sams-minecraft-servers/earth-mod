@@ -14,6 +14,8 @@ import java.nio.file.Path;
 public final class EarthConfig {
     /** Folder of elevation tiles (N44E008.hgt and so on). */
     public String dataDir = "earth-data/hgt";
+    /** Folder of ESA WorldCover land cover files (ESA_WorldCover_10m_2021_v200_N45E006_Map.tif and so on). */
+    public String landCoverDir = "earth-data/worldcover";
     /** Real metres across one block on the ground, at the equator: 5 means a 1:5 map. */
     public double horizontalScale = 5.0;
     /**

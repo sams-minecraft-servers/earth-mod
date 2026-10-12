@@ -29,6 +29,7 @@ simulation-distance=4
 spawn-protection=0
 enable-rcon=false
 sync-chunk-writes=false
+max-tick-time=-1
 PROPS
 
 FIFO=$(mktemp -u) && mkfifo "$FIFO"

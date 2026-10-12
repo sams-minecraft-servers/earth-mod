@@ -1,5 +1,6 @@
 {
   "dataDir": "/home/ubuntu/earth-data/hgt",
+  "landCoverDir": "/home/ubuntu/earth-data/worldcover",
   "horizontalScale": 5,
   "metresPerBlockY": 5,
   "seaLevel": 160,

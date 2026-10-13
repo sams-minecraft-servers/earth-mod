@@ -13,13 +13,18 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
   built-up land as it is generated (`CityVillagers`, `villagersPerCityChunk` in the config).
 - `tools/download_data.py` fetches the elevation and land cover for the whole planet (about 330 GB),
   rate-limited and restartable.
+- `tools/PackElevation.java` packs the downloaded elevation into the form the mod reads (about
+  half the size, exact, and readable a small square at a time); restartable. Run it capped, e.g.
+  `tools/guard.sh 1500M java -Xmx1g tools/PackElevation.java <data>/hgt-gz <data>/elevation 6`.
+- `GOALS.md` lists everything this server is meant to become and how each item is checked.
 - `datapack/` goes in the world's `datapacks/` folder **before the world is first started**. It makes
   the overworld 4064 blocks tall (Y -2032 to 2031, the most the game allows) and points its
   generator at the mod.
 - `config.example.json` becomes `config/earth_worldgen.json` in the server's folder: map scale,
-  metres of height per block, where the elevation tiles are.
-- Elevation tiles are one-degree SRTM `.hgt` files (they include sea depths), e.g. from
-  `https://s3.amazonaws.com/elevation-tiles-prod/skadi/N45/N45E006.hgt.gz`. A missing tile is open sea.
+  metres of height per block, where the packed elevation tiles are.
+- Elevation comes from one-degree SRTM `.hgt` tiles (they include sea depths), e.g.
+  `https://s3.amazonaws.com/elevation-tiles-prod/skadi/N45/N45E006.hgt.gz`, packed into
+  `<data>/elevation/N45/N45E006.ehg`. A missing tile is open sea.
 
 ## Building and trying it
 

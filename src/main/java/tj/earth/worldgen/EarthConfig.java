@@ -31,6 +31,8 @@ public final class EarthConfig {
     public int seaLevel = 160;
     /** How far below sea level the seabed lies where no depth is known, in blocks. */
     public int unknownSeaDepth = 6;
+    /** Villagers put in each chunk of built-up land as it is first made (see CityVillagers); 0 for none. */
+    public float villagersPerCityChunk = 0.25f;
 
     private static final double EQUATOR_METRES = 40_075_016.686;
     private static volatile EarthConfig instance;

@@ -7,8 +7,12 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
   and `earth_worldgen:earth` (biome source). No Fabric API; one mixin registers its types.
 - Ores, caves, mineshafts, strongholds and trial chambers lie at their usual depth below the real
   ground wherever it is (`Underground`), and caves never break into a sea, lake or river
-  (`EarthCarvingMask`). Ocean monuments are switched off in the datapack: the game builds them at a
-  fixed height, which here would be in mid-water.
+  (`EarthCarvingMask`). Ocean monuments stand on the real sea bed.
+- The datapack switches off the game's villages and spreads strongholds over the whole map (one
+  about every 8,000 blocks) instead of ringing block 0,0, which is open sea. Villagers are put on
+  built-up land as it is generated (`CityVillagers`, `villagersPerCityChunk` in the config).
+- `tools/download_data.py` fetches the elevation and land cover for the whole planet (about 330 GB),
+  rate-limited and restartable.
 - `datapack/` goes in the world's `datapacks/` folder **before the world is first started**. It makes
   the overworld 4064 blocks tall (Y -2032 to 2031, the most the game allows) and points its
   generator at the mod.

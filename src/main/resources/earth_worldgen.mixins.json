@@ -9,6 +9,7 @@
     "JigsawStructureMixin",
     "MaterialSystemMixin",
     "NoiseBasedChunkGeneratorMixin",
+    "OceanMonumentMixin",
     "RuinedPortalStructureMixin",
     "StructurePiecesBuilderMixin",
     "WorldGenerationContextMixin"

@@ -4,5 +4,6 @@
   "horizontalScale": 5,
   "metresPerBlockY": 5,
   "seaLevel": 160,
-  "unknownSeaDepth": 6
+  "unknownSeaDepth": 6,
+  "villagersPerCityChunk": 0.25
 }

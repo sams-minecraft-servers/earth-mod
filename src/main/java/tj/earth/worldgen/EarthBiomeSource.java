@@ -27,6 +27,7 @@ public final class EarthBiomeSource extends BiomeSource {
         meadow, stonyPeaks, frozenPeaks, snowyPlains, gravellyHills;
 
     private EarthBiomeSource(final HolderGetter<Biome> biomes) {
+        Underground.earthWorld = true;
         this.ocean = biomes.getOrThrow(Biomes.OCEAN);
         this.deepOcean = biomes.getOrThrow(Biomes.DEEP_OCEAN);
         this.river = biomes.getOrThrow(Biomes.RIVER);

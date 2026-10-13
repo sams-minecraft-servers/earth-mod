@@ -26,6 +26,9 @@ public final class Underground {
         void earth$vanillaHeights(boolean on);
     }
 
+    /** Whether this server's overworld is the Earth dimension (the datapack is in its world): set when its biome source is made. */
+    public static volatile boolean earthWorld;
+
     private Underground() {}
 
     public static boolean isEarth(final WorldGenerationContext context) {

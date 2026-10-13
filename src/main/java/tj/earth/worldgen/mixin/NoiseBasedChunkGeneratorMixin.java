@@ -1,24 +1,34 @@
 package tj.earth.worldgen.mixin;
 
 import net.minecraft.core.Holder;
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.chunk.CarvingMask;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Aquifer;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.material.rule.MaterialRule;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import tj.earth.worldgen.EarthCarvingMask;
 import tj.earth.worldgen.EarthFill;
 import tj.earth.worldgen.EarthFluids;
 
 /**
- * Gives the Earth dimension its own rule for where water stands (see EarthFluids) and its own, much
- * shorter, way of turning the noise settings into blocks (see EarthFill). Other dimensions are untouched.
+ * Gives the Earth dimension its own rule for where water stands (see EarthFluids), its own, much
+ * shorter, way of turning the noise settings into blocks (see EarthFill), and caves that leave the
+ * ground under water alone (see EarthCarvingMask). Other dimensions are untouched.
  */
 @Mixin(NoiseBasedChunkGenerator.class)
 abstract class NoiseBasedChunkGeneratorMixin {
@@ -37,5 +47,11 @@ abstract class NoiseBasedChunkGeneratorMixin {
     @Inject(method = "createFluidPicker", at = @At("HEAD"), cancellable = true)
     private static void earth$fluids(final NoiseGeneratorSettings settings, final CallbackInfoReturnable<Aquifer.FluidPicker> callback) {
         if (EarthFluids.isEarth(settings)) callback.setReturnValue(EarthFluids.picker(settings));
+    }
+
+    @Redirect(method = "generateCarvers", at = @At(value = "NEW", target = "net/minecraft/world/level/chunk/CarvingMask"))
+    private CarvingMask earth$carvingMask(final int minY, final int maxY, final ChunkAccess chunk, final Blender blender, final NoiseChunk noiseChunk,
+                                          final RandomState randomState, final BiomeManager biomeManager, final WorldGenRegion carverBiomeRegion, final MaterialRule materialRule) {
+        return chunk.getHeight() == DimensionType.Y_SIZE ? new EarthCarvingMask(minY, maxY, chunk.getPos()) : new CarvingMask(minY, maxY);
     }
 }

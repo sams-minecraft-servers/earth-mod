@@ -4,8 +4,14 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "BuiltInRegistriesMixin",
+    "CarverMixin",
+    "HeightRangePlacementMixin",
+    "JigsawStructureMixin",
     "MaterialSystemMixin",
-    "NoiseBasedChunkGeneratorMixin"
+    "NoiseBasedChunkGeneratorMixin",
+    "RuinedPortalStructureMixin",
+    "StructurePiecesBuilderMixin",
+    "WorldGenerationContextMixin"
   ],
   "injectors": {
     "defaultRequire": 1

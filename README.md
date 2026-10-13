@@ -5,6 +5,10 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
 
 - `src/` the mod: `earth_worldgen:surface` (density function: the Y of the real ground at a column)
   and `earth_worldgen:earth` (biome source). No Fabric API; one mixin registers its types.
+- Ores, caves, mineshafts, strongholds and trial chambers lie at their usual depth below the real
+  ground wherever it is (`Underground`), and caves never break into a sea, lake or river
+  (`EarthCarvingMask`). Ocean monuments are switched off in the datapack: the game builds them at a
+  fixed height, which here would be in mid-water.
 - `datapack/` goes in the world's `datapacks/` folder **before the world is first started**. It makes
   the overworld 4064 blocks tall (Y -2032 to 2031, the most the game allows) and points its
   generator at the mod.
@@ -18,6 +22,7 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
     tools/guard.sh 4G ./gradlew build --no-daemon    # build/libs/earth-worldgen-<version>.jar
     tools/test-server.sh commands.txt --fresh        # a private server in run/ on 127.0.0.1:25599
     tools/region_map.py run/world/dimensions/minecraft/overworld/region out.png
+    tools/underground.py run/world/dimensions/minecraft/overworld/region    # ores, caves and structures by depth
 
 `run/` needs `fabric-server.jar` (the Fabric server launcher for this Minecraft version, from
 https://fabricmc.net/use/server/). The test server is never one of the live servers.

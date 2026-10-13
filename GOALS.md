@@ -33,11 +33,11 @@ Last updated 2026-10-13.
 | 15 | Named places: a notice on entering a town or country, latitude and longitude on screen, and a command to find any real place | not started | walking into Chamonix says so; the command finds Kyoto |
 | 16 | An economy driven by geography: ores, crops and animals where they really are, so trade between regions matters | not started | a written table of what is found where, and the world follows it |
 | 17 | Real city footprints: real streets and building outlines (OpenStreetMap) for players to claim and build up; gives the villagers homes and work | not started | Genoa's streets are recognisable from above; villagers have beds and jobs |
-| 18 | Regional radio, only on earth.tj: the stations a player hears depend on where they are | not started | crossing into another region changes the station list |
+| 18 | Regional radio, only on earth.tj: the stations a player hears depend on where they are. Extra packs are sent per region by a small separate server-side mod (two console commands: send a pack to a player, take one away); the wrapper keeps deciding what plays. The 26.3 client holds several server packs at once, each with its own id (checked in the game code 2026-10-13; not yet tried with a real client) | not started | crossing into another region changes the station list, and a real client loads the second pack |
 | 19 | Vegetation particular to a region, starting with giant sequoias in California; more to be listed | not started | each listed plant grows only in its real range |
 | 20 | Underwater landmarks: the Edmund Fitzgerald (Lake Superior) and the Titanic (North Atlantic) at their real positions and depths; more to be listed | not started | each wreck stands on the real lake or sea bed at its coordinates |
 | 21 | A hidden Atlantis: a sunken city nobody is told about | not started | it exists; its position is written nowhere a player can read |
-| 22 | The world does not feel empty: players start in a few hub cities, and the web map shows who is where | to decide | suggested by Claude, not yet asked for by the owner |
+| 22 | The world does not feel empty: a live map of players and land claims on the website (asked for 2026-10-13, with claims kept); starting players in a few hub cities is still only a suggestion | not started | the map page shows claims and who is where on the new world |
 
 ## Checking a goal off
 

@@ -18,6 +18,7 @@ public final class EarthWorldgen implements ModInitializer {
         if (registered) return;
         registered = true;
         Registry.register(BuiltInRegistries.DENSITY_FUNCTION_TYPE, Identifier.fromNamespaceAndPath(ID, "surface"), ElevationFunction.CODEC);
+        Registry.register(BuiltInRegistries.DENSITY_FUNCTION_TYPE, Identifier.fromNamespaceAndPath(ID, "below_ground"), BelowGround.CODEC);
         Registry.register(BuiltInRegistries.MATERIAL_RULE_TYPE, Identifier.fromNamespaceAndPath(ID, "ground"), GroundRule.CODEC);
         Registry.register(BuiltInRegistries.BIOME_SOURCE, Identifier.fromNamespaceAndPath(ID, "earth"), EarthBiomeSource.CODEC);
     }

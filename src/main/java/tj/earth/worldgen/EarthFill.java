@@ -19,14 +19,14 @@ import net.minecraft.world.level.levelgen.densityfunction.ScopedDensityBuffer;
 /**
  * Turns the noise settings into blocks for one chunk of the Earth dimension. It gives the same
  * result as the game's own step, but the game works out and stores every one of a chunk's million
- * blocks one at a time; here only the layers the surface passes through are worked out. All the
- * 16-block cubes below them are solid rock and are stored as such in one go (which is also how
+ * blocks one at a time; here only the layers the surface and the noise caves under it pass
+ * through are worked out. All the 16-block cubes below them are solid rock and are stored as such in one go (which is also how
  * they stay small in memory), and everything above the highest ground or water is left as air.
  * The bottom of the world is closed with bedrock here too.
  */
 public final class EarthFill {
-    /** How far below the lowest ground in a chunk the block-by-block work starts. */
-    private static final int MARGIN = 16;
+    /** How far below the lowest ground in a chunk the block-by-block work starts: under the deepest noise caves (see BelowGround). */
+    private static final int MARGIN = Underground.DEPTH + 16;
     /** How far below the lowest ground in a chunk the game's material rule is still asked what the ground is made of. */
     private static final int MATERIAL_REACH = 128;
     private static final int BEDROCK_LAYERS = 5;

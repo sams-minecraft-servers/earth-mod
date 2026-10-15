@@ -32,7 +32,8 @@ public final class EarthCarvingMask extends CarvingMask {
         if (y <= ceiling) super.carve(x, y, z);
     }
 
-    private static int ceiling(final int blockX, final int blockZ) {
+    /** The highest Y that may be cut at a column: below the bed of any water at or beside it, by Underground.WATERTIGHT. */
+    public static int ceiling(final int blockX, final int blockZ) {
         int ceiling = Integer.MAX_VALUE;
         for (int dz = -BESIDE; dz <= BESIDE; dz += BESIDE) {
             for (int dx = -BESIDE; dx <= BESIDE; dx += BESIDE) {

@@ -8,6 +8,12 @@ public final class Terrain {
     public static final int DRY = DimensionType.MIN_Y * 2;
 
     private static final float SEA_MARGIN_METRES = 5f;
+    /**
+     * Water that reads higher than that is still the sea when the sea is this near: up to
+     * NEAR_SEA_METRES high within 64 blocks of it, up to FAR_SEA_METRES within 224.
+     */
+    private static final int[] SEA_REACH = {24, 64, 128, 224};
+    private static final float NEAR_SEA_METRES = 60f, FAR_SEA_METRES = 25f;
 
     /** Everything worked out about one column. The game asks about the same column thousands of times while it builds a chunk. */
     public record Column(int x, int z, float metres, int cover, float surfaceY, int waterLevel) {
@@ -30,7 +36,8 @@ public final class Terrain {
         if (column == null || column.x != blockX || column.z != blockZ) {
             float metres = metres(blockX, blockZ);
             int cover = cover(blockX, blockZ);
-            column = new Column(blockX, blockZ, metres, cover, surfaceY(blockX, blockZ, metres, cover), waterLevel(blockX, blockZ, metres, cover));
+            boolean sea = isSea(blockX, blockZ, cover, metres);
+            column = new Column(blockX, blockZ, metres, cover, surfaceY(blockX, blockZ, metres, cover, sea), waterLevel(blockX, blockZ, metres, cover, sea));
             COLUMNS[slot] = column;
         }
         return column;
@@ -54,20 +61,35 @@ public final class Terrain {
     }
 
     /** Sea, as opposed to a lake or river: water whose surface is at sea level. */
-    public static boolean isSea(int cover, float metres) {
-        // The elevation data is rough along a waterfront (it sees ships, cranes and quays), so water
-        // within a few metres of sea level is the sea.
-        return isWater(cover, metres) && !(metres > SEA_MARGIN_METRES);
+    public static boolean isSea(int blockX, int blockZ, int cover, float metres) {
+        if (!isWater(cover, metres)) return false;
+        // The elevation data is rough along a waterfront (it sees ships, cranes, quays and the cliffs
+        // above), so water within a few metres of sea level is the sea, and so is water that reads
+        // higher but has the sea close by: otherwise a harbour is dotted with raised blobs of water.
+        if (!(metres > SEA_MARGIN_METRES)) return true;
+        if (metres > NEAR_SEA_METRES) return false;
+        for (int r : SEA_REACH) {
+            if (r > 64 && metres > FAR_SEA_METRES) return false;
+            for (int dx = -r; dx <= r; dx += r) {
+                for (int dz = -r; dz <= r; dz += r) {
+                    if (dx == 0 && dz == 0) continue;
+                    int there = cover(blockX + dx, blockZ + dz);
+                    if (there != LandCover.WATER && there != LandCover.UNKNOWN) continue;
+                    if (!(metres(blockX + dx, blockZ + dz) > (there == LandCover.WATER ? SEA_MARGIN_METRES : 0))) return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
      * Blocks below this Y are water in a column that has any (the sea, a lake, a river); DRY otherwise.
      * A lake's water stands at the height the elevation data gives its surface.
      */
-    private static int waterLevel(int blockX, int blockZ, float metres, int cover) {
+    private static int waterLevel(int blockX, int blockZ, float metres, int cover, boolean sea) {
         EarthConfig c = EarthConfig.get();
         if (!isWater(cover, metres)) return DRY;
-        return isSea(cover, metres) ? c.seaLevel : landY(c, stillWaterMetres(blockX, blockZ, metres));
+        return sea ? c.seaLevel : landY(c, stillWaterMetres(blockX, blockZ, metres));
     }
 
     /**
@@ -89,24 +111,48 @@ public final class Terrain {
     }
 
     /** The Y just above the top solid block of a column: blocks below it are ground. */
-    private static float surfaceY(int blockX, int blockZ, float metres, int cover) {
+    private static float surfaceY(int blockX, int blockZ, float metres, int cover, boolean sea) {
         EarthConfig c = EarthConfig.get();
         if (!isWater(cover, metres)) {
             // Land, which may lie below sea level (polders, the Dead Sea shore) and stays dry there.
             // Where the maps disagree along a coast (land here, but a sea depth for its height) the land wins
             // and stands just clear of the water. Real land far below sea level (the Dead Sea shore) is
             // flattened by this too: a known limit until such places are listed.
-            if (Float.isNaN(metres) || (cover != LandCover.UNKNOWN && metres < 0)) return c.seaLevel + 1;
-            return c.seaLevel + 1 + (float) (metres / c.metresPerBlockY);
+            if (Float.isNaN(metres) || (cover != LandCover.UNKNOWN && metres < 0)) return shore(blockX, blockZ, c.seaLevel + 1);
+            return shore(blockX, blockZ, c.seaLevel + 1 + (float) (metres / c.metresPerBlockY));
         }
         float floor = DimensionType.MIN_Y + 8;
-        if (isSea(cover, metres)) {
+        if (sea) {
             if (Float.isNaN(metres)) return c.seaLevel - c.unknownSeaDepth;
             // The seabed where its depth is known; near the shore, where the data says "0", it shelves away from the land.
             float bed = c.seaLevel - 1 + (float) (metres / c.metresPerBlockY);
             return Math.max(floor, Math.min(bed, c.seaLevel - inlandDepth(blockX, blockZ)));
         }
         return Math.max(floor, landY(c, stillWaterMetres(blockX, blockZ, metres)) - inlandDepth(blockX, blockZ));
+    }
+
+    /**
+     * Land comes down to the water beside it: the block at the water's edge is level with the
+     * water, the one behind it a block higher, and from there the ground is as measured. (Measured
+     * ground is never less than a block above the sea, which left every shore a step.)
+     */
+    private static float shore(int blockX, int blockZ, float surfaceY) {
+        int level = waterBeside(blockX, blockZ, 1);
+        if (level != DRY) return Math.max(level, surfaceY - 2);
+        level = waterBeside(blockX, blockZ, 2);
+        return level != DRY ? Math.max(level, surfaceY - 1) : surfaceY;
+    }
+
+    /** The level of the water one or two blocks from a column of land (the highest, if there are several); DRY if there is none. */
+    private static int waterBeside(int blockX, int blockZ, int away) {
+        int level = DRY;
+        for (int dx = -away; dx <= away; dx++) {
+            int dz = away - Math.abs(dx);
+            for (int side = 0; side < (dz == 0 ? 1 : 2); side++, dz = -dz) {
+                if (isWet(blockX + dx, blockZ + dz)) level = Math.max(level, column(blockX + dx, blockZ + dz).waterLevel());
+            }
+        }
+        return level;
     }
 
     private static int landY(EarthConfig c, float metres) {

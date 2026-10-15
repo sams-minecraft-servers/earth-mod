@@ -17,7 +17,8 @@ RUN=run
 ROOT=$PWD
 HEAP=${TEST_HEAP:-4G}
 LIMIT=$(( $(numfmt --from=iec "$HEAP") / 1048576 + 2048 ))M
-if pgrep -f "[f]abric-server.jar --nogui" > /dev/null; then echo "a test server is already running; stop it first"; exit 1; fi
+# Only this user's: a live server run by root may also be a Fabric server, and is not ours to stop.
+if pgrep -u "$(id -u)" -f "[f]abric-server.jar --nogui" > /dev/null; then echo "a test server is already running; stop it first"; exit 1; fi
 [ -s "$RUN/fabric-server.jar" ] || { echo "run/fabric-server.jar is missing (see README)"; exit 1; }
 if [ "${2:-}" = "--fresh" ]; then find "$RUN/world" -mindepth 1 -maxdepth 1 ! -name datapacks -exec rm -r {} +; fi
 

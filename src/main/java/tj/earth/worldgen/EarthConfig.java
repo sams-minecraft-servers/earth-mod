@@ -16,6 +16,8 @@ public final class EarthConfig {
     public String dataDir = "earth-data/elevation";
     /** Folder of ESA WorldCover land cover files (ESA_WorldCover_10m_2021_v200_N45E006_Map.tif and so on). */
     public String landCoverDir = "earth-data/worldcover";
+    /** Folder of packed streets and building outlines (N44/N44E008.urb and so on; see tools/pack_urban.py). Nothing is built where a tile is missing. */
+    public String urbanDir = "earth-data/urban";
     /** Real metres across one block on the ground, at the equator: 5 means a 1:5 map. */
     public double horizontalScale = 5.0;
     /**

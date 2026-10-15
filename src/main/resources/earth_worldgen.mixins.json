@@ -5,6 +5,7 @@
   "mixins": [
     "BuiltInRegistriesMixin",
     "CarverMixin",
+    "ChunkGeneratorMixin",
     "HeightRangePlacementMixin",
     "JigsawStructureMixin",
     "MaterialSystemMixin",

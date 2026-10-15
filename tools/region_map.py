@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Draws what the test server generated: reads region files and writes a picture of the surface.
 
-    tools/region_map.py <world>/dimensions/minecraft/overworld/region out.png [--min-y -2032]
+    tools/region_map.py <world>/dimensions/minecraft/overworld/region out.png [--min-y -2032] [--blocks]
 
 Each pixel is one block column, coloured by its biome and shaded by height, so the result can be
-compared with a real map. Also prints the range of heights, the biomes found and the size on disk.
+compared with a real map. With --blocks a column whose top block is a road, wall or roof is that
+block's colour instead, so streets and buildings show. Also prints the range of heights, the
+biomes found and the size on disk.
 Needs nothing beyond Python itself.
 """
 import os, struct, sys, zlib
@@ -66,6 +68,15 @@ COLOURS = {'ocean': (40, 80, 170), 'deep_ocean': (25, 50, 130), 'river': (60, 11
            'forest': (60, 130, 60), 'taiga': (50, 100, 80), 'meadow': (150, 200, 130), 'stony_peaks': (150, 150, 150), 'frozen_peaks': (240, 245, 250),
            'mangrove_swamp': (70, 120, 70), 'windswept_gravelly_hills': (135, 130, 120), 'jungle': (40, 150, 50), 'desert': (220, 200, 120), 'savanna': (190, 180, 90), 'jungle': (40, 150, 50), 'swamp': (90, 110, 80), 'snowy_plains': (235, 240, 240)}
 
+# The top blocks that --blocks draws in their own colour: what UrbanBuilder makes roads, walls and roofs of.
+BLOCK_COLOURS = {'gray_concrete': (55, 58, 62), 'light_gray_concrete': (125, 125, 115), 'stone_bricks': (112, 112, 112), 'dirt_path': (148, 121, 65),
+                 'coarse_dirt': (119, 85, 59), 'cobbled_deepslate': (60, 60, 66), 'oak_planks': (162, 130, 78), 'white_terracotta': (210, 178, 161),
+                 'yellow_terracotta': (186, 133, 35), 'orange_terracotta': (161, 83, 37), 'pink_terracotta': (161, 78, 78), 'smooth_sandstone': (223, 214, 170),
+                 'terracotta': (152, 94, 67), 'light_gray_terracotta': (135, 107, 98), 'white_concrete': (207, 213, 214), 'smooth_stone': (165, 165, 165),
+                 'andesite': (136, 136, 136), 'polished_andesite': (132, 135, 134), 'iron_block': (220, 220, 220), 'bricks': (150, 97, 83),
+                 'quartz_block': (236, 230, 223), 'spruce_planks': (115, 85, 49), 'cobblestone': (128, 127, 128), 'brick_slab': (170, 90, 70),
+                 'granite_slab': (165, 110, 90), 'stone_brick_slab': (118, 118, 124), 'deepslate_tile_slab': (54, 54, 58)}
+
 def png(path, width, height, rows):
     def chunk(tag, body): return struct.pack('>I', len(body)) + tag + body + struct.pack('>I', zlib.crc32(tag + body) & 0xffffffff)
     raw = b''.join(b'\x00' + row for row in rows)
@@ -99,7 +110,8 @@ def largest_group(cols):
 def main():
     region_dir, out = sys.argv[1], sys.argv[2]
     min_y = int(sys.argv[sys.argv.index('--min-y') + 1]) if '--min-y' in sys.argv else -2032
-    cols, stored, statuses, biomes = {}, 0, {}, {}
+    by_block = '--blocks' in sys.argv
+    cols, stored, statuses, biomes, tops = {}, 0, {}, {}, {}
     for c, size in chunks(region_dir):
         statuses[c.get('Status')] = statuses.get(c.get('Status'), 0) + 1
         hm = (c.get('Heightmaps') or {}).get('WORLD_SURFACE')
@@ -109,9 +121,19 @@ def main():
         # the biome of the section the surface is in, sampled per 4x4 column
         sections = {s['Y']: s for s in c['sections']}
         cx, cz = c['xPos'], c['zPos']
+        unpacked = {}
         for i, h in enumerate(heights):
             x, z, y = i % 16, i // 16, h + min_y - 1
             sec = sections.get(y >> 4) or {}
+            if by_block:
+                states = sec.get('block_states') or {}
+                names = [(p if isinstance(p, str) else p.get('Name') or p.get('', '?')).split(':')[-1] for p in states.get('palette') or []]
+                if len(names) > 1:
+                    if y >> 4 not in unpacked: unpacked[y >> 4] = unpack(states['data'], max(4, (len(names) - 1).bit_length()), 4096)
+                    top = names[unpacked[y >> 4][(y & 15) * 256 + z * 16 + x]]
+                else: top = names[0] if names else '?'
+                tops[top] = tops.get(top, 0) + 1
+                if top in BLOCK_COLOURS: cols[(cx * 16 + x, cz * 16 + z)] = (y, top); continue
             b = sec.get('biomes') or {}
             pal = b.get('palette') or ['?']
             if len(pal) == 1: name = pal[0]
@@ -134,6 +156,7 @@ def main():
         return print('not drawing: the picture would be %d x %d pixels (limit %d in all)' % (x1 - x0 + 1, z1 - z0 + 1, MAX_PIXELS))
     print('blocks x %d..%d  z %d..%d   surface y %d..%d' % (x0, x1, z0, z1, min(ys), max(ys)))
     print('biomes:', dict(sorted(biomes.items(), key=lambda kv: -kv[1])))
+    if by_block: print('top blocks:', dict(sorted(tops.items(), key=lambda kv: -kv[1])[:40]))
     n = sum(v for k, v in statuses.items() if k == 'minecraft:full')
     print('finished chunks: %d, %.1f KB each as stored' % (n, stored / n / 1024))
     lo, hi = min(ys), max(ys)
@@ -144,7 +167,7 @@ def main():
             v = cols.get((x, z))
             if not v: row += (0, 0, 0); continue
             y, name = v
-            base = COLOURS.get(name, (200, 60, 200))
+            base = BLOCK_COLOURS.get(name) or COLOURS.get(name, (200, 60, 200))
             west = cols.get((x - 1, z - 1), v)[0]
             shade = max(0.55, min(1.35, 1.0 + (y - west) * 0.12)) * (0.8 + 0.2 * (y - lo) / max(1, hi - lo))
             row += tuple(max(0, min(255, int(ch * shade))) for ch in base)

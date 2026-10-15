@@ -11,6 +11,15 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
 - The datapack switches off the game's villages and spreads strongholds over the whole map (one
   about every 8,000 blocks) instead of ringing block 0,0, which is open sea. Villagers are put on
   built-up land as it is generated (`CityVillagers`, `villagersPerCityChunk` in the config).
+- Real streets and buildings are built into each chunk as it is made (`UrbanBuilder`), from packed
+  outlines (`Urban`, `urbanDir` in the config): every building as a block of its real outline and
+  height, roads cutting through, bridges carried level. At 1:5 a house is a block or two across.
+  `tools/pack_urban.py N44E008` packs one one-degree tile from Overture Maps (needs the duckdb
+  Python package in `<data>/urban-venv`; run it under `tools/guard.sh 2G`). Only Genoa's tile is
+  packed so far; nothing is built where a tile is missing. The data is ODbL: the website must
+  credit OpenStreetMap contributors and the Overture Maps Foundation.
+- The sea is one level: water that the elevation data reads high (ships, cranes, cliffs) is still
+  the sea when the sea is close by. Land comes down to the water beside it, level at the edge.
 - `tools/download_data.py` fetches the elevation and land cover for the whole planet (about 330 GB),
   rate-limited and restartable.
 - `tools/PackElevation.java` packs the downloaded elevation into the form the mod reads (about
@@ -30,7 +39,7 @@ Earth as chunks are first needed, from elevation data, instead of from a pre-gen
 
     tools/guard.sh 4G ./gradlew build --no-daemon    # build/libs/earth-worldgen-<version>.jar
     tools/test-server.sh commands.txt --fresh        # a private server in run/ on 127.0.0.1:25599
-    tools/region_map.py run/world/dimensions/minecraft/overworld/region out.png
+    tools/region_map.py run/world/dimensions/minecraft/overworld/region out.png   # add --blocks to see streets and buildings
     tools/underground.py run/world/dimensions/minecraft/overworld/region    # ores, caves and structures by depth
 
 `run/` needs `fabric-server.jar` (the Fabric server launcher for this Minecraft version, from

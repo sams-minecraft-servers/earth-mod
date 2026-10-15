@@ -68,7 +68,7 @@ public final class EarthBiomeSource extends BiomeSource {
         float metres = column.metres();
         int cover = column.cover();
         if (Terrain.isWater(cover, metres)) {
-            if (!Terrain.isSea(cover, metres)) return river;
+            if (column.waterLevel() != EarthConfig.get().seaLevel) return river;
             return metres < -1000 ? deepOcean : ocean;
         }
         double latitude = Math.abs(EarthConfig.get().latitude(blockZ));

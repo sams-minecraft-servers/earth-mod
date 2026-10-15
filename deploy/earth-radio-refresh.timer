@@ -1,0 +1,10 @@
+[Unit]
+Description=earth.tj country radio: refresh the permitted stations every day
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

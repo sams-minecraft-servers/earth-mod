@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Records a sample from each country's station and builds one small resource pack per country.
 
-    tools/radio/build_packs.py record [minutes, default 25] [at once, default 16]
+    tools/radio/build_packs.py record [minutes, default 25] [at once, default 16] [--permitted]
     tools/radio/build_packs.py build
+    tools/radio/build_packs.py refresh      record the stations that have given permission, then build
+
+With --permitted only the stations whose permission in stations.json is "yes" are recorded. refresh
+is what the earth-radio-refresh timer runs (deploy/earth-radio-refresh.*): each permitted station
+gets a fresh sample every day, and the wrapper hands out the new pack the next time someone tunes in.
 
 record: for every country in radio/stations.json, records its first-choice station (an alternate
 if that one gives nothing) into <data>/radio/recordings/<code>/ as five-minute stereo Ogg parts at
@@ -60,8 +65,12 @@ def record_one(country, minutes):
         shutil.rmtree(fresh, ignore_errors=True)
     return code, 'FAILED: no station gave a recording'
 
-def record(minutes, at_once):
+def record(minutes, at_once, permitted=False):
     countries = [c for c in json.load(open(STATIONS)) if c['stations']]
+    if permitted:
+        # Only the stations that said yes, first choice first.
+        countries = [dict(c, stations=[s for s in c['stations'] if s.get('permission') == 'yes']) for c in countries]
+        countries = [c for c in countries if c['stations']]
     print('%d countries to record, %d minutes each, %d at once' % (len(countries), minutes, at_once), flush=True)
     failed = 0
     with ThreadPoolExecutor(at_once) as pool:
@@ -122,6 +131,8 @@ def build():
 
 if __name__ == '__main__':
     mode = sys.argv[1] if len(sys.argv) > 1 else ''
-    if mode == 'record': record(int(sys.argv[2]) if len(sys.argv) > 2 else 25, int(sys.argv[3]) if len(sys.argv) > 3 else 16)
+    numbers = [a for a in sys.argv[2:] if not a.startswith('--')]
+    if mode == 'record': record(int(numbers[0]) if numbers else 25, int(numbers[1]) if len(numbers) > 1 else 16, '--permitted' in sys.argv)
     elif mode == 'build': build()
+    elif mode == 'refresh': record(25, 8, True); build()
     else: sys.exit(__doc__)

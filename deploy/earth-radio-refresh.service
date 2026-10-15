@@ -1,0 +1,19 @@
+# Records a fresh sample from each country station that has given permission, and rebuilds the
+# packs (tools/radio/build_packs.py refresh). Installed by deploy/install-radio-refresh.sh.
+[Unit]
+Description=earth.tj country radio: fresh samples of the permitted stations
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+Nice=15
+IOSchedulingClass=idle
+MemoryMax=1G
+MemorySwapMax=0
+TimeoutStartSec=3h
+Environment=EARTH_DATA=/home/ubuntu/earth-data
+ExecStart=/usr/bin/python3 /home/ubuntu/earth-mod/tools/radio/build_packs.py refresh
+StandardOutput=append:/home/ubuntu/earth-data/radio-refresh.log
+StandardError=append:/home/ubuntu/earth-data/radio-refresh.log

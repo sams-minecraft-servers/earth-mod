@@ -1,4 +1,4 @@
-# Downloads Overture's buildings and roads (about 350 GB, 12 MB/s, about 8 hours) and then packs
+# Downloads Overture's buildings and roads (about 350 GB, 4 MB/s, about a day: 12 MB/s saturated the disk on 2026-10-15) and then packs
 # every tile with buildings for the mod (tools/pack_planet.py). Restartable: both steps skip what
 # is done. Lowest disk and CPU priority, so the live servers keep their disk. Started by hand:
 #   sudo install -m 644 deploy/earth-urban-build.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl start earth-urban-build
@@ -17,7 +17,7 @@ MemoryMax=2500M
 MemorySwapMax=0
 TimeoutStartSec=infinity
 Environment=EARTH_DATA=/home/ubuntu/earth-data
-ExecStart=/usr/bin/python3 /home/ubuntu/earth-mod/tools/download_overture.py 12
+ExecStart=/usr/bin/python3 /home/ubuntu/earth-mod/tools/download_overture.py 4
 ExecStart=/home/ubuntu/earth-data/urban-venv/bin/python /home/ubuntu/earth-mod/tools/pack_planet.py
 StandardOutput=append:/home/ubuntu/earth-data/urban-build.log
 StandardError=append:/home/ubuntu/earth-data/urban-build.log

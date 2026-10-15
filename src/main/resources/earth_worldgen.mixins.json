@@ -9,6 +9,7 @@
     "HeightRangePlacementMixin",
     "JigsawStructureMixin",
     "MaterialSystemMixin",
+    "NaturalSpawnerMixin",
     "NoiseBasedChunkGeneratorMixin",
     "OceanMonumentMixin",
     "RuinedPortalStructureMixin",

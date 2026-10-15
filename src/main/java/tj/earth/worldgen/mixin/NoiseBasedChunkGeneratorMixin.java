@@ -25,11 +25,12 @@ import tj.earth.worldgen.CityVillagers;
 import tj.earth.worldgen.EarthCarvingMask;
 import tj.earth.worldgen.EarthFill;
 import tj.earth.worldgen.EarthFluids;
+import tj.earth.worldgen.Fauna;
 
 /**
  * Gives the Earth dimension its own rule for where water stands (see EarthFluids), its own, much
  * shorter, way of turning the noise settings into blocks (see EarthFill), and caves that leave the
- * ground under water alone (see EarthCarvingMask), and villagers in its towns (see CityVillagers).
+ * ground under water alone (see EarthCarvingMask), villagers in its towns (see CityVillagers) and axolotls in Mexico City's lakes (see Fauna).
  * Other dimensions are untouched.
  */
 @Mixin(NoiseBasedChunkGenerator.class)
@@ -53,7 +54,10 @@ abstract class NoiseBasedChunkGeneratorMixin {
 
     @Inject(method = "spawnOriginalMobs", at = @At("TAIL"))
     private void earth$villagers(final WorldGenRegion region, final CallbackInfo callback) {
-        if (EarthFluids.isEarth(this.settings.value())) CityVillagers.settle(region);
+        if (EarthFluids.isEarth(this.settings.value())) {
+            CityVillagers.settle(region);
+            Fauna.settleAxolotls(region);
+        }
     }
 
     @Redirect(method = "generateCarvers", at = @At(value = "NEW", target = "net/minecraft/world/level/chunk/CarvingMask"))

@@ -6,7 +6,7 @@
 One file per one-degree tile, <data>/urban/N44/N44E008.urb, holding every building outline (with
 its height, floors and kind where known) and every road and railway on the surface, sorted into
 small squares so the mod only reads the squares under the chunks it is making. <data> is EARTH_DATA
-or /home/ubuntu/earth-data.
+or ~/earth-data.
 
 The outlines come from Overture Maps (OpenStreetMap plus machine-traced buildings; ODbL, so the
 website must credit "OpenStreetMap contributors, Overture Maps Foundation"). They are read
@@ -18,7 +18,7 @@ duckdb). Run it under tools/guard.sh; it keeps one tile in memory at a time.
 """
 import math, os, struct, sys, time, zlib
 
-DATA = os.environ.get('EARTH_DATA', '/home/ubuntu/earth-data')
+DATA = os.environ.get('EARTH_DATA', os.path.expanduser('~/earth-data'))
 SOURCE = os.environ.get('URBAN_SOURCE', 's3://overturemaps-us-west-2/release/2026-09-23.1').rstrip('/')
 
 CELLS = 128              # squares along one side of a tile

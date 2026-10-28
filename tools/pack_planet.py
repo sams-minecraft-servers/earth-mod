@@ -10,7 +10,7 @@ goes to stdout; the list of tiles is kept in <data>/urban/tiles.txt.
 """
 import math, os, subprocess, sys, time
 
-DATA = os.environ.get('EARTH_DATA', '/home/ubuntu/earth-data')
+DATA = os.environ.get('EARTH_DATA', os.path.expanduser('~/earth-data'))
 # Straight from Overture's bucket: a local copy meant 350 GB of writes, which the shared disk could not take
 # alongside the live servers (2026-10-16). URBAN_SOURCE still points it at a local copy if there is one.
 SOURCE = os.environ.get('URBAN_SOURCE', 's3://overturemaps-us-west-2/release/2026-09-23.1')

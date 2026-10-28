@@ -6,7 +6,7 @@
 
 Elevation: one-degree tiles from the public bucket elevation-tiles-prod (skadi), kept gzipped in
 <data>/hgt-gz/N45/N45E006.hgt.gz. Land cover: ESA WorldCover 2021 from the public bucket
-esa-worldcover, in <data>/worldcover, as the mod reads it. <data> is EARTH_DATA or /home/ubuntu/earth-data.
+esa-worldcover, in <data>/worldcover, as the mod reads it. <data> is EARTH_DATA or ~/earth-data.
 
 It can be stopped and started again at any time: a file already here with the right size is
 skipped, and a file is only given its name once it is complete. One file at a time, through curl,
@@ -15,7 +15,7 @@ so the rate is the whole of what this takes from the line. Needs nothing beyond 
 import os, subprocess, sys, time, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 
-DATA = os.environ.get('EARTH_DATA', '/home/ubuntu/earth-data')
+DATA = os.environ.get('EARTH_DATA', os.path.expanduser('~/earth-data'))
 SOURCES = [
     # name, bucket address, prefix in the bucket, the files wanted, where they go
     ('land cover', 'https://esa-worldcover.s3.eu-central-1.amazonaws.com', 'v200/2021/map/', '_Map.tif', lambda key: 'worldcover/' + key.split('/')[-1]),

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs a command so that it cannot take the machine's memory: the live servers share this machine
-# and a process that uses up what is left freezes it (that happened on 2026-10-12).
+# Runs a command so that it cannot take the machine's memory: on a machine that also runs game
+# servers, a process that uses up what is left freezes everything.
 #
 #   tools/guard.sh <memory limit> <command...>      e.g. tools/guard.sh 4G ./gradlew build --no-daemon
 #
@@ -18,7 +18,7 @@ limit_kb=$(( $(numfmt --from=iec "$LIMIT") / 1024 ))
 available_kb() { awk '/^MemAvailable:/ {print $2}' /proc/meminfo; }
 need_kb=$(( limit_kb + RESERVE_GB * 1048576 ))
 if [ "$(available_kb)" -lt "$need_kb" ]; then
-    echo "guard: not starting: $(( $(available_kb) / 1048576 )) GB available, need $LIMIT plus $RESERVE_GB GB for the live servers"
+    echo "guard: not starting: $(( $(available_kb) / 1048576 )) GB available, need $LIMIT plus $RESERVE_GB GB for everything else on the machine"
     exit 75
 fi
 

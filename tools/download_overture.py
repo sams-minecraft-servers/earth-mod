@@ -14,7 +14,7 @@ import os, re, subprocess, sys, time, urllib.parse, urllib.request
 RELEASE = '2026-09-23.1'
 BUCKET = 'https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com'
 PREFIXES = ['theme=buildings/type=building/', 'theme=transportation/type=segment/']
-OUT = os.path.join(os.environ.get('EARTH_DATA', '/home/ubuntu/earth-data'), 'overture')
+OUT = os.path.join(os.environ.get('EARTH_DATA', os.path.expanduser('~/earth-data')), 'overture')
 
 def listing(prefix):
     token, files = None, []

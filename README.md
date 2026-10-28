@@ -1,55 +1,79 @@
-# Earth worldgen
+# Earth Worldgen
 
-A Fabric mod (server side only; players join with an unmodified game) that generates the real
-Earth as chunks are first needed, from elevation data, instead of from a pre-generated map.
+A Fabric mod that turns a Minecraft world into the real Earth, made **as players explore it** from
+real elevation and land-cover data, instead of from a pre-generated map download.
 
-- `src/` the mod: `earth_worldgen:surface` (density function: the Y of the real ground at a column)
-  and `earth_worldgen:earth` (biome source). No Fabric API; one mixin registers its types.
-- Ores, caves, mineshafts, strongholds and trial chambers lie at their usual depth below the real
-  ground wherever it is (`Underground`), and caves never break into a sea, lake or river
-  (`EarthCarvingMask`). Ocean monuments stand on the real sea bed.
-- The datapack switches off the game's villages and spreads strongholds over the whole map (one
-  about every 8,000 blocks) instead of ringing block 0,0, which is open sea. Villagers are put on
-  built-up land as it is generated (`CityVillagers`, `villagersPerCityChunk` in the config).
-- Real streets and buildings are built into each chunk as it is made (`UrbanBuilder`), from packed
-  outlines (`Urban`, `urbanDir` in the config): every building as a block of its real outline and
-  height, roads cutting through, bridges carried level. At 1:5 a house is a block or two across.
-  `tools/pack_urban.py N44E008` packs one one-degree tile from Overture Maps (needs the duckdb
-  Python package in `<data>/urban-venv`; run it under `tools/guard.sh 2G`). Only Genoa's tile is
-  packed so far; nothing is built where a tile is missing. The data is ODbL: the website must
-  credit OpenStreetMap contributors and the Overture Maps Foundation.
-- The sea is one level: water that the elevation data reads high (ships, cranes, cliffs) is still
-  the sea when the sea is close by. Land comes down to the water beside it, level at the edge.
-- `tools/download_data.py` fetches the elevation and land cover for the whole planet (about 330 GB),
-  rate-limited and restartable.
-- `tools/PackElevation.java` packs the downloaded elevation into the form the mod reads (about
-  half the size, exact, and readable a small square at a time); restartable. Run it capped, e.g.
-  `tools/guard.sh 1500M java -Xmx1g tools/PackElevation.java <data>/hgt-gz <data>/elevation 6`.
-- `GOALS.md` lists everything this server is meant to become and how each item is checked.
-- `datapack/` goes in the world's `datapacks/` folder **before the world is first started**. It makes
-  the overworld 4064 blocks tall (Y -2032 to 2031, the most the game allows) and points its
-  generator at the mod.
-- `config.example.json` becomes `config/earth_worldgen.json` in the server's folder: map scale,
-  metres of height per block, where the packed elevation tiles are.
-- Elevation comes from one-degree SRTM `.hgt` tiles (they include sea depths), e.g.
-  `https://s3.amazonaws.com/elevation-tiles-prod/skadi/N45/N45E006.hgt.gz`, packed into
-  `<data>/elevation/N45/N45E006.ehg`. A missing tile is open sea.
+At the default 1:5 scale, one block is 5 metres. Mountains, coastlines, rivers, lakes, forests,
+deserts and ice caps sit where they really are, and Everest and the Mariana Trench both fit in the
+world. The map is about 8 million by 4 million blocks.
 
-## Building and trying it
+**Play it:** the mod runs the public server **earth.tj** (Minecraft Java Edition 26.3). Join with an
+ordinary, unmodified game.
 
-    tools/guard.sh 4G ./gradlew build --no-daemon    # build/libs/earth-worldgen-<version>.jar
-    tools/test-server.sh commands.txt --fresh        # a private server in run/ on 127.0.0.1:25599
-    tools/region_map.py run/world/dimensions/minecraft/overworld/region out.png   # add --blocks to see streets and buildings
-    tools/underground.py run/world/dimensions/minecraft/overworld/region    # ores, caves and structures by depth
+## What it does
 
-`run/` needs `fabric-server.jar` (the Fabric server launcher for this Minecraft version, from
-https://fabricmc.net/use/server/). The test server is never one of the live servers.
+- **Real terrain from real heights.** The ground at each block column comes from one-degree
+  elevation tiles, including the sea bed. Nothing is pre-generated: a tile is only read when a chunk
+  over it is first made.
+- **Real biomes.** The biome at each place comes from its real land cover (forest, cropland, bare
+  rock, snow, water, built-up land), read with its height and latitude.
+- **Water where the maps put it.** The sea is at sea level, and lakes and rivers stand at their real
+  heights. Land below sea level (the Dead Sea shore, the Netherlands) stays dry.
+- **A normal game underneath.** Ores, caves, geodes, mineshafts, strongholds, trial chambers and
+  ancient cities are at their usual depth *below the real ground*, wherever that is. Caves never
+  break into a sea, lake or river. Ocean monuments stand on the real sea bed.
+- **Animals where they live.** Pandas in Sichuan's forests, polar bears in the Arctic, llamas in the
+  Andes, camels in deserts, salmon in northern waters.
+- **People in the cities.** The game's random villages are switched off; villagers appear on real
+  built-up land instead, and strongholds are spread over the whole planet.
+- **Optional real streets and buildings.** Building outlines and roads from Overture Maps can be
+  built into chunks as they are made. At 1:5 a house is a block or two across.
+- **Server side only.** Players need no mod, no resource pack and no client download.
 
-## Moving to a new Minecraft version
+## Quick start
 
-1. Change `minecraft_version`, `loader_version` and `loom_version` in `gradle.properties`.
-2. `./gradlew build`. World generation internals change often: fix what no longer compiles
-   (`./gradlew genSources` gives readable game sources to compare against).
-3. Compare `datapack/` with the new version's own `dimension_type/overworld.json` and
-   `worldgen/noise_settings/overworld.json`, and update `pack.mcmeta`.
-4. Run the test server on a copy of the world before the live server is updated.
+You need a Fabric server for Minecraft **26.3**, Java **25**, and disk space for the data: about
+250 GB for the whole planet, or much less for one region.
+
+1. Put the mod jar in the server's `mods/` folder. Fabric API is not needed.
+2. **Before the world is first started**, copy `datapack/` into `<world>/datapacks/earth_worldgen/`.
+3. Copy `config.example.json` to `config/earth_worldgen.json` and point it at your data folders.
+4. Download and pack the data (`tools/download_data.py`, then `tools/PackElevation.java`).
+5. Start the server, and set a spawn point on land (block 0, 0 is open sea off West Africa).
+
+The full walk-through is in [docs/Installing-on-a-server.md](docs/Installing-on-a-server.md).
+
+## Documentation
+
+| Page | What it covers |
+|---|---|
+| [Installing on a server](docs/Installing-on-a-server.md) | Setting up a new Earth world, step by step |
+| [Getting the data](docs/Getting-the-data.md) | Downloading and packing elevation, land cover and streets |
+| [Configuration](docs/Configuration.md) | Every setting in `earth_worldgen.json` |
+| [Finding places](docs/Finding-places.md) | Converting latitude and longitude to block coordinates |
+| [How it works](docs/How-it-works.md) | What each part of the mod does to world generation |
+| [Building from source](docs/Building-from-source.md) | Compiling the mod and running the test server |
+| [Updating Minecraft](docs/Updating-Minecraft.md) | Moving the mod to a new game version |
+| [FAQ and limitations](docs/FAQ-and-limitations.md) | Known limits and what has not been tested |
+
+## Status
+
+Version 0.1. The mod runs earth.tj every day, but it has only been used on that one server
+(Minecraft 26.3, Linux). The helper scripts in `tools/` assume Linux. Expect rough edges, and
+please [open an issue](https://github.com/sams-minecraft-servers/earth-worldgen/issues) when you find one.
+
+## Data and credits
+
+The mod ships with no map data: you download it from public sources, listed with their licences
+in [ATTRIBUTION.md](ATTRIBUTION.md). If you run a public world made with it, credit those sources
+somewhere players can see, such as your website. That is required for ESA WorldCover (CC BY 4.0)
+and for the streets and buildings (ODbL).
+
+## Licence
+
+Copyright © 2026 Samuel Swauger. Licensed under the GNU Lesser General Public License v3.0 only
+(LGPL-3.0-only): see [COPYING.LESSER](COPYING.LESSER) and [COPYING](COPYING). You may use the mod on
+any server and include it in modpacks; changed versions of the mod itself must be shared under the
+same licence.
+
+Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.

@@ -64,8 +64,8 @@ python3 -m venv ~/earth-data/urban-venv
 ```
 
 `tools/pack_planet.py` packs every tile that has a town in it, most populous first; it takes days.
-Where no streets file exists, chunks get terrain without buildings. Set `urbanDir` in the config
-to a folder that doesn't exist to turn buildings off entirely.
+Where no streets file exists, chunks get terrain without buildings. To turn streets or buildings
+off without deleting the files, use the `cities` settings in [Configuration](Configuration.md).
 
 Streets and buildings are only built into chunks made **after** their tile was packed. Chunks that
 already exist are never changed.

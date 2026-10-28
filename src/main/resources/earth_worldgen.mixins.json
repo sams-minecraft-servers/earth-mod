@@ -6,6 +6,7 @@
     "BuiltInRegistriesMixin",
     "CarverMixin",
     "ChunkGeneratorMixin",
+    "ChunkGeneratorStructureStateMixin",
     "HeightRangePlacementMixin",
     "JigsawStructureMixin",
     "MaterialSystemMixin",

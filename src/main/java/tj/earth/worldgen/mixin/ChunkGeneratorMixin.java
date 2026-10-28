@@ -16,18 +16,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tj.earth.worldgen.Fauna;
+import tj.earth.worldgen.Monuments;
 import tj.earth.worldgen.UrbanBuilder;
 
 /**
- * Builds the real streets and buildings into each chunk of the Earth dimension (see UrbanBuilder)
- * just before the game adds its trees, plants and structures, and has animals turn up where they
+ * Builds the real streets and buildings (see UrbanBuilder) and any monuments (see Monuments) into
+ * each chunk of the Earth dimension just before the game adds its trees, plants and structures,
+ * and has animals turn up where they
  * really live (see Fauna). Other dimensions are untouched.
  */
 @Mixin(ChunkGenerator.class)
 abstract class ChunkGeneratorMixin {
     @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
     private void earth$streets(final WorldGenLevel level, final ChunkAccess chunk, final StructureManager structureManager, final CallbackInfo callback) {
-        if (chunk.getHeight() == DimensionType.Y_SIZE) UrbanBuilder.build(chunk);
+        if (chunk.getHeight() != DimensionType.Y_SIZE) return;
+        UrbanBuilder.build(chunk);
+        Monuments.build(chunk);
     }
 
     @Inject(method = "getMobsAt", at = @At("RETURN"), cancellable = true)

@@ -38,6 +38,12 @@ Required credit:
 
 https://docs.overturemaps.org/attribution/
 
+## Country borders: Natural Earth
+
+The country borders shipped with the mod (`countries.bin.gz`, used for the per-country settings)
+are Natural Earth's 1:10m Admin 0 countries, which are in the public domain. No credit is required,
+but it is welcome: "Made with Natural Earth." https://www.naturalearthdata.com
+
 ## Minecraft
 
 Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.

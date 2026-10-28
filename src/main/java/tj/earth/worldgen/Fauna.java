@@ -124,6 +124,7 @@ public final class Fauna {
     /** The game's spawn list for a place, with the animals that live there added and those that only live elsewhere taken off. */
     public static WeightedList<MobSpawnSettings.SpawnerData> adjust(final WeightedList<MobSpawnSettings.SpawnerData> list, final MobCategory category,
                                                                    final int blockX, final int blockZ) {
+        if (!EarthConfig.get().animals.realRanges) return list;
         return ADJUSTED.computeIfAbsent(new Key(list, category, here(blockX, blockZ)), Fauna::build);
     }
 
@@ -150,6 +151,7 @@ public final class Fauna {
 
     /** Axolotls in the lakes and canals of the Valley of Mexico (Xochimilco, Chalco), as a chunk is first made. */
     public static void settleAxolotls(final WorldGenRegion region) {
+        if (!EarthConfig.get().animals.axolotls) return;
         if (region.getHeight() != DimensionType.Y_SIZE) return;
         ChunkPos chunk = region.getCenter();
         EarthConfig config = EarthConfig.get();

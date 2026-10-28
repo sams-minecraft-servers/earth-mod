@@ -49,8 +49,19 @@ place is from Y 64. The mixins apply this to:
 - buried ruined portals (`RuinedPortalStructureMixin`)
 - ocean monuments, which stand on the real sea bed (`OceanMonumentMixin`)
 
-The datapack switches off the game's random villages and spreads strongholds across the whole map,
-about one every 8,000 blocks, instead of ringing block 0, 0, which is open sea.
+The datapack spreads strongholds across the whole map, about one every 8,000 blocks, instead of
+ringing block 0, 0, which is open sea. `ChunkGeneratorStructureStateMixin` takes the structure sets
+switched off in the config (villages, by default) out of the Earth world's list, so they are neither
+made nor found by eyes of ender or `/locate`.
+
+## Monuments
+
+**`Monuments`** builds about 250 famous buildings and wrecks where they really stand. Each chunk
+builds its own part of any monument that reaches into it, as it is first made, so a monument comes
+out whole whichever chunk is generated first. A monument stands on a stone footing on the first free
+block above the ground or water at its centre, with the trees and buildings in its way cleared;
+wrecks lie on the sea bed. **`Countries`** (Natural Earth borders, shipped with the mod) answers which
+country a place is in, for the settings that switch cities and monuments off country by country.
 
 ## Life
 
@@ -63,6 +74,7 @@ about one every 8,000 blocks, instead of ringing block 0, 0, which is open sea.
 
 ## Streets and buildings (optional)
 
+Each part can be switched off in the config, everywhere or country by country.
 **`Urban`** reads the packed streets files, one per one-degree tile, sorted into small squares so
 only the squares under new chunks are read. **`UrbanBuilder`** builds them into each chunk after its
 caves are cut and before its trees go in, so trees keep off roads and roofs. Every building is a block

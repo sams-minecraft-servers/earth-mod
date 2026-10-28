@@ -40,15 +40,12 @@ without it, delete the world folder and start again.
 
 ### 3. Write the config
 
-```
-mkdir -p config
-cp config.example.json config/earth_worldgen.json
-```
+The mod writes `config/earth_worldgen.json`, with every setting and its default, the first time the
+server starts. To set it up before the world exists, copy `config.example.json` there instead.
 
 Edit the three folder paths so they point at your data. Relative paths are read from the server's
-folder. The other settings are explained in [Configuration](Configuration.md). Keep the defaults
-unless you know you want something else: **changing them after players have explored leaves seams
-between old and new chunks.**
+folder. Decide now whether you want cities, monuments and the game's own structures (all explained
+in [Configuration](Configuration.md)): **settings only affect land generated after they change.**
 
 ### 4. Get the data
 

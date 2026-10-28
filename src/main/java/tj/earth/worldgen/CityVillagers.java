@@ -20,9 +20,11 @@ public final class CityVillagers {
     private CityVillagers() {}
 
     public static void settle(final WorldGenRegion region) {
-        float perChunk = EarthConfig.get().villagersPerCityChunk;
-        if (region.getHeight() != DimensionType.Y_SIZE || !(perChunk > 0)) return;
+        EarthConfig config = EarthConfig.get();
+        float perChunk = config.villagersPerCityChunk;
+        if (region.getHeight() != DimensionType.Y_SIZE || !(perChunk > 0) || !config.cities.enabled || !config.cities.villagers) return;
         ChunkPos chunk = region.getCenter();
+        if (EarthConfig.listed(config.cities.disabledCountries, Countries.atBlock(chunk.getMiddleBlockX(), chunk.getMiddleBlockZ()))) return;
 
         // How built up the chunk is, from sixteen points across it.
         int[] builtX = new int[16], builtZ = new int[16];

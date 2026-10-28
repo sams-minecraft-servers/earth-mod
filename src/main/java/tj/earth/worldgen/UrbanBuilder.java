@@ -50,8 +50,15 @@ public final class UrbanBuilder {
 
     private UrbanBuilder() {}
 
+    private static final Urban.Road[] NO_ROADS = {};
+    private static final Urban.Building[] NO_BUILDINGS = {};
+
     public static void build(final ChunkAccess chunk) {
+        EarthConfig.Cities cities = EarthConfig.get().cities;
+        if (!cities.enabled || !(cities.roads || cities.buildings)) return;
         int minX = chunk.getPos().getMinBlockX(), minZ = chunk.getPos().getMinBlockZ();
+        if (!cities.disabledCountries.isEmpty() && EarthConfig.listed(cities.disabledCountries, Countries.atBlock(minX + 8, minZ + 8))) return;
+        boolean roads = cities.roads, buildings = cities.buildings;
         // A chunk is much smaller than a square of the map, so its corners find every square it lies over.
         Near[] near = new Near[4];
         int squares = 0;
@@ -85,7 +92,7 @@ public final class UrbanBuilder {
                 Urban.Road road = null, path = null, bridge = null;
                 int deck = NO_DECK;
                 double pier = 0;
-                for (Urban.Road candidate : here.roads) {
+                for (Urban.Road candidate : roads ? here.roads : NO_ROADS) {
                     double half = Math.max(HALF_WIDTH[candidate.kind], LEAST_HALF_WIDTH * metresZ);
                     if (px < candidate.minX - half / metresX || px > candidate.maxX + half / metresX
                         || pz < candidate.minZ - half / metresZ || pz > candidate.maxZ + half / metresZ) continue;
@@ -114,7 +121,7 @@ public final class UrbanBuilder {
                     chunk.setBlockState(pos.set(x, flat, z), surface(road.kind), 2);
                 } else {
                     Urban.Building building = null;
-                    for (Urban.Building candidate : here.buildings) {
+                    for (Urban.Building candidate : buildings ? here.buildings : NO_BUILDINGS) {
                         if (candidate.contains(px, pz) && (building == null || height(candidate, metresX, metresZ) > height(building, metresX, metresZ))) building = candidate;
                     }
                     if (building != null && free - column.top() <= DEEPEST_FOUNDATION) {

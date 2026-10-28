@@ -27,7 +27,8 @@ The map is a plain latitude/longitude grid, so land near the poles is stretched 
 
 **My city has no buildings.**
 Streets and buildings are optional and only appear where you have packed that tile with
-`tools/pack_urban.py`, and only in chunks made after it was packed.
+`tools/pack_urban.py`, and only in chunks made after it was packed. Check that `cities.enabled`,
+`cities.buildings` and `cities.roads` are on and the country isn't in `cities.disabledCountries`.
 
 **Can I change the scale later?**
 Not without seams: existing chunks keep the old scale. Decide before players explore.
